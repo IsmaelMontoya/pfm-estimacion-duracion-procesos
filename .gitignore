@@ -1,0 +1,16 @@
+.env
+__pycache__/
+.ipynb_checkpoints/
+
+# Datos: nunca se versionan
+*.csv
+*.parquet
+*.pkl
+*.joblib
+
+# output/ no se versiona, salvo los informes de fase y las figuras
+output/*
+!output/*.md
+!output/figuras/
+output/figuras/*
+!output/figuras/*.png

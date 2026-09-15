@@ -1,0 +1,14 @@
+# Restricciones minimas. Versiones exactas con las que se ejecutaron las fases 1 a 7,
+# sobre Python 3.14.3, para poder reproducir el entorno:
+#   pandas 3.0.0 · numpy 2.4.2 · SQLAlchemy 2.0.52 · PyMySQL 1.2.0
+#   python-dotenv 1.2.3 · tabulate 0.10.0 · matplotlib 3.10.8 · pyarrow 25.0.1
+#   scikit-learn 1.9.0
+pandas>=2.0
+numpy>=1.26
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+python-dotenv>=1.0
+tabulate>=0.9
+matplotlib>=3.8
+pyarrow>=15.0
+scikit-learn>=1.5

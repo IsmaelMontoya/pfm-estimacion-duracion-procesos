@@ -1,0 +1,815 @@
+<title>Panel de Anomalías</title>
+
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --ink: #1b2430;
+    --muted: #6b7686;
+    --line: #e7e4dc;
+    --blue: #2563eb;
+    --amber: #d97706;
+    --green: #16a34a;
+    --violet: #7c3aed;
+    --teal: #0d9488;
+    --rose: #e11d48;
+    --orange: #C8622A;
+    --shadow: 0 1px 2px rgba(27,36,48,.04);
+    --shadow-lg: 0 10px 24px -8px rgba(27,36,48,.16);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 17px;
+  }
+  a { color: var(--blue); }
+
+  /* ── Cabecera (fiel a bcx-header) ─────────────────────────────── */
+  .bcx-header {
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: 16px 30px 0; display: flex; flex-direction: column; gap: 16px;
+  }
+  .bcx-brand { display: flex; align-items: center; gap: .9rem; }
+  .bcx-brand-icon {
+    width: 38px; height: 38px; border-radius: 11px; background: #f1e7de;
+    display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+  }
+  .bcx-brand-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+  .bcx-brand-sub { font-size: .85rem; color: var(--muted); margin-top: -1px; }
+  .bcx-brand-divider { width: 1px; height: 34px; background: var(--line); margin: 0 .5rem; }
+
+  .bcx-tabs { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .bcx-tab {
+    background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent;
+    padding: 8px 14px 12px; font-weight: 700; font-size: 1.05rem; cursor: pointer; border-radius: 9px 9px 0 0;
+  }
+  .bcx-tab:hover { color: var(--ink); }
+  .bcx-tab.is-active { color: var(--ink); background: var(--surface); box-shadow: 0 3px 10px rgba(27,36,48,.10); }
+  .bcx-tab[data-tab="demo"].is-active { border-bottom-color: var(--blue); }
+  .bcx-tab[data-tab="gerente"].is-active { border-bottom-color: var(--amber); }
+
+  main { padding: 0; }
+  .bcx-panel { display: none; padding: 26px 30px 60px; max-width: 1180px; margin: 0 auto; }
+  .bcx-panel.is-active { display: block; }
+  h2 { font-size: 1.8rem; margin: 0 0 20px; padding-left: 12px; font-weight: 800; letter-spacing: -.01em; }
+  #tab-demo h2 { border-left: 4px solid var(--blue); }
+  #tab-gerente h2 { border-left: 4px solid var(--amber); }
+  .panel-subtitle { color: var(--muted); font-size: 1rem; margin: -14px 0 22px 12px; max-width: 46rem; }
+  .panel-footnote { color: var(--muted); font-size: .74rem; margin-top: 36px; padding-top: 12px; border-top: 1px dashed var(--line); line-height: 1.6; }
+
+  .note-scope {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: #eef4ff; border: 1px solid #bfdbfe; color: #1e40af;
+    border-radius: 10px; padding: .5rem .9rem; font-size: .85rem; font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .note-scope.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .note-scope.ok { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+  /* ══════════════════ TAB 1 — presentación de 3 minutos ══════════════════ */
+
+  .stage-frame {
+    position: relative;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: var(--shadow); overflow: hidden;
+    height: 62vh; min-height: 460px;
+    display: flex; align-items: stretch;
+    cursor: pointer; user-select: none;
+  }
+  .scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 3rem; text-align: center; gap: 1.4rem;
+    opacity: 0; transform: translateX(2.4rem);
+    transition: opacity .5s ease, transform .5s ease;
+    pointer-events: none;
+  }
+  .scene.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .scene.leaving-back { transform: translateX(-2.4rem); }
+  @media (prefers-reduced-motion: reduce) { .scene { transition: opacity .15s linear; transform: none !important; } }
+
+  .kicker { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .kicker.is-alert { color: var(--rose); }
+  .scene-title { font-size: clamp(1.6rem, 3.4vw, 2.4rem); font-weight: 800; letter-spacing: -.01em; margin: 0; max-width: 34rem; }
+  .scene-title.is-alert { color: var(--rose); }
+  .lede { font-size: 1.05rem; line-height: 1.55; color: var(--muted); max-width: 34rem; margin: 0; }
+  .lede b { color: var(--ink); }
+
+  .big-readout { display: flex; align-items: baseline; gap: .7rem; }
+  .big-readout .value { font-size: clamp(3.2rem, 9vw, 5rem); font-weight: 800; letter-spacing: -.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
+  .big-readout .unit { font-size: 1rem; color: var(--muted); padding-bottom: .5rem; }
+
+  .stamps { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+  .stamp { font-size: .8rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .2rem .7rem; font-weight: 600; }
+
+  .compare { display: flex; align-items: center; justify-content: center; gap: 1.8rem; }
+  .compare .fig { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+  .compare .fig .tag { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+  .compare .fig .n { font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .compare .fig.old .n { color: var(--muted); }
+  .compare .fig.new .n { color: var(--blue); }
+  .compare .arrow { font-size: 1.6rem; color: var(--muted); }
+  .delta-chip { font-weight: 700; color: var(--blue); background: #eef4ff; border: 1px solid #bfdbfe; border-radius: 999px; padding: .3rem 1rem; }
+
+  .gauge { width: min(560px, 84%); display: flex; flex-direction: column; gap: .9rem; }
+  .gauge-row { display: flex; align-items: center; gap: .8rem; }
+  .gauge-label { font-size: .82rem; color: var(--muted); width: 5.4rem; text-align: right; font-weight: 700; }
+  .gauge-track { position: relative; flex: 1; height: 1.4rem; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .gauge-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 3px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .gauge-fill.calm { background: var(--blue); }
+  .gauge-fill.hot { background: repeating-linear-gradient(135deg, var(--rose) 0 12px, #b91c3f 12px 24px); }
+  .gauge-fill.overflow::after { content: '⟶ fuera de escala'; position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); font-size: .68rem; color: #fff; white-space: nowrap; }
+  .gauge-value { font-size: .85rem; width: 6.4rem; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .gauge-row.hot .gauge-value { color: var(--rose); }
+
+  .rate-chip { display: inline-flex; align-items: baseline; gap: .5rem; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 999px; padding: .4rem 1.1rem; }
+  .rate-chip .n { font-size: 1.4rem; font-weight: 800; color: var(--rose); }
+  .rate-chip .t { font-size: .8rem; color: var(--muted); }
+
+  .stage-chrome { display: flex; justify-content: center; align-items: center; gap: .6rem; margin-top: 16px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); border: 0; padding: 0; cursor: pointer; }
+  .dot.on { background: var(--blue); }
+  .dot.on.alert { background: var(--rose); }
+  .stage-counter { position: absolute; top: 16px; right: 20px; font-size: .78rem; color: var(--muted); font-weight: 700; }
+  .stage-hint { position: absolute; bottom: 18px; font-size: .78rem; color: var(--muted); left: 0; right: 0; text-align: center; }
+  .fin-restart { background: none; border: 0; color: var(--blue); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: .85rem; }
+
+  /* ══════════════════ TAB 2 — panel de gerente ══════════════════ */
+
+  .bcx-summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  @media (max-width: 720px) { .bcx-summary-row { grid-template-columns: repeat(2, 1fr); } }
+  .bcx-summary {
+    display: flex; flex-direction: column; gap: 2px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 20px; box-shadow: var(--shadow);
+  }
+  .bcx-summary .bcx-big { font-size: 2.1rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .bcx-summary.rose .bcx-big { color: var(--rose); }
+  .bcx-summary .bcx-lbl { font-size: .85rem; color: var(--muted); }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 18px 20px 8px; margin-bottom: 22px;
+  }
+  .chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .chart-title { font-weight: 800; font-size: 1.05rem; }
+  .chart-sub { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .chart-legend { display: flex; gap: 18px; font-size: .78rem; color: var(--muted); margin: 4px 0 14px; }
+  .chart-dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .chart-dot.calm { background: var(--blue); }
+  .chart-dot.hot { background: var(--rose); }
+  .chart-body { max-height: 420px; overflow-y: auto; padding-bottom: 10px; }
+  .chart-row {
+    display: grid; grid-template-columns: 9rem 1fr 5.5rem; align-items: center; gap: .8rem;
+    padding: 7px 4px; border-radius: 8px; cursor: pointer;
+  }
+  @media (max-width: 640px) { .chart-row { grid-template-columns: 7rem 1fr 4.5rem; } }
+  .chart-row:hover { background: #fbfaf7; }
+  .chart-row.not-clickable { cursor: default; }
+  .chart-row.not-clickable:hover { background: none; }
+  .chart-row-label { font-size: .8rem; font-weight: 700; color: var(--ink); line-height: 1.25; }
+  .chart-row-label .n { display: block; font-weight: 500; color: var(--muted); font-size: .7rem; }
+  .chart-bars { display: flex; flex-direction: column; gap: 3px; }
+  .chart-bar-track { position: relative; height: 9px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+  .chart-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; }
+  .chart-bar-fill.calm { background: var(--blue); }
+  .chart-bar-fill.hot { background: var(--rose); }
+  .chart-row-diff { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; font-size: .88rem; color: var(--rose); }
+
+  #usersGrid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px; margin-bottom: 10px;
+  }
+  .user-card {
+    background: var(--surface); border-radius: 14px; border: 1px solid var(--line);
+    box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .user-card.is-focused { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(217,119,6,.16); }
+  .card-head { padding: .9rem 1.1rem; display: flex; align-items: center; gap: .8rem; border-bottom: 1px solid var(--line); }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #8a3010);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .82rem; color: #fff; flex-shrink: 0;
+  }
+  .card-name { font-weight: 700; font-size: 1rem; }
+  .card-sub { font-size: .78rem; color: var(--muted); }
+  .card-body { padding: .9rem 1.1rem; display: flex; flex-direction: column; gap: .7rem; }
+  .card-stats { display: flex; gap: 1.4rem; }
+  .card-stats .stat-n { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .card-stats .stat-l { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  .st { display: inline-block; padding: .12rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+  .st.ok  { background: #dcfce7; color: #166534; }
+  .st.err { background: #fee2e2; color: #991b1b; }
+  .st.run { background: #dbeafe; color: #1e40af; }
+  .st.na  { background: #f1f5f9; color: #64748b; }
+  .st.warn { background: #fef3c7; color: #92400e; }
+  td.n-warn { color: #92400e; font-weight: 700; }
+
+  .card-foot { border-top: 1px dashed var(--line); padding-top: .6rem; display: flex; justify-content: space-between; align-items: center; }
+  .card-foot button {
+    background: none; border: 1px solid var(--line); border-radius: 8px; padding: .35rem .7rem;
+    font-size: .78rem; font-weight: 700; color: var(--ink); cursor: pointer;
+  }
+  .card-foot button:hover { background: #fbfaf7; }
+
+  .real-callout {
+    background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rose);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; box-shadow: var(--shadow);
+  }
+  .real-callout .rc-tag { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--rose); }
+  .real-callout table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .9rem; }
+  .real-callout th { text-align: left; padding: 6px 8px; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--ink); }
+  .real-callout td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    gap: 12px; margin: 4px 0 16px;
+  }
+  .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button {
+    background: none; border: 0; padding: .5rem 1rem; font-size: .85rem; font-weight: 700;
+    color: var(--muted); cursor: pointer; border-right: 1px solid var(--line);
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button.is-on { background: var(--ink); color: #fff; }
+  .seg.status button.is-on.st-anomalo { background: var(--rose); }
+  .seg.status button.is-on.st-atencion { background: var(--amber); }
+  .seg.status button.is-on.st-normal { background: var(--green); }
+
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .group-head { display: flex; align-items: center; gap: .8rem; padding: .8rem 1.1rem; cursor: pointer; }
+  .group-chevron { transition: transform .18s ease; color: var(--muted); font-size: .85rem; }
+  .group.open .group-chevron { transform: rotate(90deg); }
+  .group-name { font-weight: 700; }
+  .group-count { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--muted); background: #f1f5f9; border: 1px solid var(--line); border-radius: 999px; padding: .15rem .6rem; }
+  .group-count.has-anom { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  .group-body { display: none; padding: 0 1.1rem 1.1rem; border-top: 1px solid var(--line); max-height: 70vh; overflow-y: auto; }
+  .group.open .group-body { display: block; }
+
+  table.cases-table { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: .8rem; }
+  table.cases-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--ink); font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); position: sticky; top: 0; background: var(--surface); }
+  table.cases-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  table.cases-table th.sortable:hover { color: var(--ink); }
+  table.cases-table th.sortable .arrow { display: inline-block; width: .9em; opacity: .35; }
+  table.cases-table th.sortable.sort-active .arrow { opacity: 1; color: var(--blue); }
+  table.cases-table td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.cases-table td.num { font-variant-numeric: tabular-nums; }
+  td.n-off { color: var(--rose); font-weight: 700; }
+
+  .verdict-group { display: flex; gap: .35rem; }
+  .verdict-group button {
+    border: 1px solid var(--line); background: #fff; border-radius: 999px;
+    padding: .25rem .7rem; font-size: .74rem; font-weight: 700; cursor: pointer; color: var(--muted);
+  }
+  .verdict-group button.is-sel.sel-razonable { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+  .verdict-group button.is-sel.sel-anomalo { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  .verdict-group button.is-sel.sel-no_se { background: #f1f5f9; color: #475569; border-color: var(--line); }
+
+  .bcx-info { border: 1px solid #bfdbfe; background: #eef4ff; border-radius: 12px; padding: 10px 16px; margin: 0 0 20px; font-size: .9rem; color: #1e40af; }
+
+  .empty-row td { text-align: center; color: var(--muted); padding: 18px 8px; font-style: italic; }
+</style>
+
+<header class="bcx-header">
+  <div class="bcx-brand">
+    <div class="bcx-brand-icon">⏱️</div>
+    <div>
+      <div class="bcx-brand-title">Panel de Anomalías</div>
+      <div class="bcx-brand-sub">PFM — Estimación de la duración de procesos</div>
+    </div>
+    <div class="bcx-brand-divider"></div>
+    <div class="bcx-brand-sub">datos de test 2026 · pipeline Modelos de impuestos</div>
+  </div>
+  <nav class="bcx-tabs">
+    <button class="bcx-tab is-active" data-tab="demo">Presentación</button>
+    <button class="bcx-tab" data-tab="gerente">Panel de gerente</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ══════════ TAB 1 ══════════ -->
+  <section class="bcx-panel is-active" id="tab-demo">
+    <h2>Presentación (3 min)</h2>
+    <p class="note-scope">Pantalla pensada para proyectar en la defensa — clic, espacio o flechas para avanzar.</p>
+
+    <div class="stage-frame" id="stage">
+      <span class="stage-counter" id="counter">01 / 04</span>
+
+      <section class="scene active" id="s1">
+        <p class="kicker">antes de ejecutar el proceso</p>
+        <h1 class="scene-title">¿Cuánto debería tardar esto?</h1>
+        <p class="lede">Y, más importante todavía: <b>¿qué casos merecen que alguien los mire?</b></p>
+      </section>
+
+      <section class="scene" id="s2">
+        <p class="kicker">el punto de partida</p>
+        <div class="big-readout"><span class="value">16,4</span><span class="unit">min de error medio</span></div>
+        <p class="lede">Así de bien predice ya <b>una regla muy simple</b>: la mediana histórica de tiempo para este mismo tipo de modelo tributario.</p>
+        <div class="stamps"><span class="stamp">MOD. 303</span><span class="stamp">MOD. 111</span><span class="stamp">MOD. 200</span><span class="stamp">MOD. 347</span></div>
+      </section>
+
+      <section class="scene" id="s3">
+        <p class="kicker">el modelo, sin adornos</p>
+        <h2 class="scene-title" style="font-size:1.6rem">Se entrenó algo más complejo. Esto es lo que ganó.</h2>
+        <div class="compare">
+          <div class="fig old"><span class="tag">regla simple</span><span class="n">16,4</span></div>
+          <div class="arrow">→</div>
+          <div class="fig new"><span class="tag">modelo</span><span class="n">15,5</span></div>
+        </div>
+        <div class="delta-chip">−5,3 % de error, en minutos</div>
+        <p class="lede">Una mejora <b>real y consistente</b> — gana en las 4 pruebas internas — pero por debajo del 10&nbsp;% exigido antes de empezar. Aquí no está el valor.</p>
+      </section>
+
+      <section class="scene" id="s4">
+        <p class="kicker is-alert">al cerrar la campaña</p>
+        <h2 class="scene-title is-alert">Aquí está el valor.</h2>
+        <div class="gauge" id="gauge">
+          <div class="gauge-row"><span class="gauge-label">Predicho</span><div class="gauge-track"><div class="gauge-fill calm" id="fill-pred"></div></div><span class="gauge-value">23,8 min</span></div>
+          <div class="gauge-row hot"><span class="gauge-label">Real</span><div class="gauge-track"><div class="gauge-fill hot overflow" id="fill-real"></div></div><span class="gauge-value">1.003,7 min</span></div>
+        </div>
+        <p class="lede">El mismo modelo, mirado al revés, señala esto como <b>anómalo</b> — 42 veces más de lo esperado. En todo el test marca el 3,9&nbsp;% de los casos.</p>
+        <div class="rate-chip"><span class="n">3,9&nbsp;%</span><span class="t">de las negociaciones de prueba, señaladas</span></div>
+        <p><button class="fin-restart" id="restart" type="button">↺ volver a empezar</button></p>
+      </section>
+
+      <div class="stage-hint" id="hint">clic, espacio o → para continuar</div>
+    </div>
+    <div class="stage-chrome">
+      <button class="dot" data-i="0" aria-label="Escena 1"></button>
+      <button class="dot" data-i="1" aria-label="Escena 2"></button>
+      <button class="dot" data-i="2" aria-label="Escena 3"></button>
+      <button class="dot" data-i="3" aria-label="Escena 4"></button>
+    </div>
+  </section>
+
+  <!-- ══════════ TAB 2 ══════════ -->
+  <section class="bcx-panel" id="tab-gerente">
+    <h2>Panel de gerente</h2>
+    <p class="panel-subtitle">Revisión de procesos con sobrecoste de tiempo, por tipo de modelo tributario — para decidir qué merece la pena mirar antes de cerrar la campaña.</p>
+
+    <div class="bcx-summary-row">
+      <div class="bcx-summary rose"><span class="bcx-big">239</span><span class="bcx-lbl">casos señalados (test 2026, real)</span></div>
+      <div class="bcx-summary"><span class="bcx-big">6.192</span><span class="bcx-lbl">negociaciones evaluadas (real)</span></div>
+      <div class="bcx-summary"><span class="bcx-big">3,86&nbsp;%</span><span class="bcx-lbl">tasa de marcado global (real)</span></div>
+      <div class="bcx-summary"><span class="bcx-big">26</span><span class="bcx-lbl">responsables con negociaciones en test (real)</span></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Predicho vs. real, en promedio</div>
+          <div class="chart-sub" id="chartSub">De mayor a menor diferencia — pincha una fila para ir a sus casos</div>
+        </div>
+        <div class="seg" id="chartSeg">
+          <button data-chart="modelo" class="is-on">Por modelo</button>
+          <button data-chart="empleado">Por responsable</button>
+          <button data-chart="cliente">Por cliente</button>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <span><i class="chart-dot calm"></i> Predicho (media)</span>
+        <span><i class="chart-dot hot"></i> Real (media)</span>
+      </div>
+      <div id="chartBody" class="chart-body"></div>
+    </div>
+
+    <div id="usersGrid"></div>
+
+    <div class="real-callout">
+      <div class="rc-tag">Casos reales destacados (Fase 6)</div>
+      <table>
+        <thead><tr><th>Negociación</th><th>Modelo</th><th>Predicho</th><th>Real</th><th>Veces lo esperado</th></tr></thead>
+        <tbody>
+          <tr><td>#31928</td><td>347</td><td>23,8 min</td><td>1.003,7 min</td><td>42×</td></tr>
+          <tr><td>#31899</td><td>347</td><td>7,8 min</td><td>795,4 min</td><td>102×</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 style="font-size:1.3rem;border-left-color:var(--rose)">Casos a revisar</h2>
+
+    <div class="toolbar">
+      <div class="seg" id="groupSeg">
+        <button data-group="empleado" class="is-on">Agrupar por responsable</button>
+        <button data-group="modelo">Agrupar por modelo</button>
+      </div>
+      <div class="seg status" id="statusSeg">
+        <button data-status="todos" class="is-on">Todos</button>
+        <button data-status="anomalo" class="st-anomalo">Anómalos (&gt;300%)</button>
+        <button data-status="atencion" class="st-atencion">Atención (100–300%)</button>
+        <button data-status="normal" class="st-normal">Normales (≤100%)</button>
+      </div>
+    </div>
+
+    <div id="casesList"></div>
+
+    <p class="panel-footnote">Datos reales del test 2026 (6.192 negociaciones), exportados de <code>predicciones_planificacion.parquet</code> y <code>deals.csv</code>, con el mismo cálculo de anomalía de la Fase 6 (sigma por proceso, |z|&nbsp;&gt;&nbsp;3). Instantánea estática de esa exportación: no se conecta en vivo a Bitrix. Su finalidad es detectar anomalías de proceso, no evaluar el desempeño de las personas — limitación 6 de la memoria del PFM.</p>
+  </section>
+
+</main>
+
+<script src="casos_reales.js"></script>
+<script src="empleados_reales.js"></script>
+<script>
+(function () {
+  /* ---------- Tab switching ---------- */
+  var tabs = document.querySelectorAll('.bcx-tab');
+  var panels = { demo: document.getElementById('tab-demo'), gerente: document.getElementById('tab-gerente') };
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('is-active'); });
+      Object.values(panels).forEach(function (p) { p.classList.remove('is-active'); });
+      t.classList.add('is-active');
+      panels[t.dataset.tab].classList.add('is-active');
+    });
+  });
+
+  /* ---------- Escenas de la presentación ---------- */
+  var scenes = ['s1', 's2', 's3', 's4'];
+  var current = 0;
+  var dots = document.querySelectorAll('.dot');
+  var counter = document.getElementById('counter');
+  var hint = document.getElementById('hint');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderScene(prevIndex) {
+    scenes.forEach(function (id, i) {
+      var el = document.getElementById(id);
+      el.classList.remove('active', 'leaving-back');
+      if (i === current) { el.classList.add('active'); if (prevIndex !== undefined && prevIndex > current) el.classList.add('leaving-back'); }
+    });
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === current); d.classList.toggle('alert', i === 3 && i === current); });
+    counter.textContent = String(current + 1).padStart(2, '0') + ' / 04';
+    hint.style.display = current === 0 ? 'block' : 'none';
+    if (current === 3) triggerGauge();
+  }
+  function triggerGauge() {
+    var pred = document.getElementById('fill-pred'), real = document.getElementById('fill-real');
+    pred.style.width = '0%'; real.style.width = '0%';
+    setTimeout(function () { pred.style.width = '18%'; real.style.width = '100%'; }, reduced ? 0 : 120);
+  }
+  function goScene(i) { var prev = current; current = Math.max(0, Math.min(scenes.length - 1, i)); renderScene(prev); }
+  function nextScene() { if (current < scenes.length - 1) goScene(current + 1); }
+  function prevScene() { if (current > 0) goScene(current - 1); }
+
+  document.getElementById('stage').addEventListener('click', function (e) {
+    if (e.target.closest('.dot') || e.target.closest('#restart')) return;
+    nextScene();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('tab-demo').classList.contains('is-active')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextScene(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevScene(); }
+    else if (e.key === 'Home') { e.preventDefault(); goScene(0); }
+  });
+  dots.forEach(function (d) { d.addEventListener('click', function (e) { e.stopPropagation(); goScene(parseInt(d.dataset.i, 10)); }); });
+  document.getElementById('restart').addEventListener('click', function (e) { e.stopPropagation(); goScene(0); });
+  renderScene();
+
+  /* ---------- Panel de gerente: datos reales ---------- */
+  // CASOS_REALES / EMPLEADOS_REALES vienen de casos_reales.js / empleados_reales.js,
+  // exportados de output/predicciones_planificacion.parquet + output/deals.csv,
+  // con el mismo calculo de anomalia de la Fase 6 (sigma por proceso, |z| > 3).
+  // Verificado: 239 marcados de 6.192 (3,86 %), identico al informe oficial.
+
+  var TOP_EMPLEADOS = EMPLEADOS_REALES.slice(0, 8);
+  var EMP_IDS = EMPLEADOS_REALES.map(function (e) { return e.id; });
+
+  var grid = document.getElementById('usersGrid');
+  TOP_EMPLEADOS.forEach(function (e) {
+    var card = document.createElement('div');
+    card.className = 'user-card';
+    card.id = 'card-emp-' + e.id;
+    card.innerHTML =
+      '<div class="card-head">' +
+        '<div class="avatar">R' + e.id + '</div>' +
+        '<div><div class="card-name">Responsable ' + e.id + '</div><div class="card-sub">pipeline Modelos de impuestos · test 2026</div></div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-stats">' +
+          '<div><div class="stat-n">' + e.n.toLocaleString('es-ES') + '</div><div class="stat-l">negociaciones</div></div>' +
+          '<div><div class="stat-n">' + e.marcados.toLocaleString('es-ES') + '</div><div class="stat-l">marcadas</div></div>' +
+        '</div>' +
+        '<div class="card-foot">' +
+          '<span class="st ' + (e.marcados > 0 ? 'err' : 'ok') + '">' + e.marcados + ' caso' + (e.marcados === 1 ? '' : 's') + ' a revisar</span>' +
+          '<button type="button" class="btn-ver-casos" data-emp="' + e.id + '">Ver casos</button>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+
+  // Adapta el formato real {id, proceso, empresa, empleado, fecha, predicho, real, z, anom}
+  // al que consume el resto del panel.
+  // Nivel de atencion visual, en 3 tramos sobre el mismo z ya calculado en la Fase 6.
+  // El umbral oficial de "anomalo" (|z| > 3, 239 casos) no cambia: esto solo anade un
+  // aviso intermedio para que un caso con diferencia grande pero z moderado no parezca
+  // identico a uno realmente normal. "Rareza" es el mismo z expresado como % (z=1 -> 100%),
+  // para no tener que explicar que es una desviacion tipica.
+  function nivelDeZ(z) {
+    var az = Math.abs(z);
+    if (az > 3) return 'anomalo';
+    if (az > 1) return 'atencion';
+    return 'normal';
+  }
+  var ESTADO_RANK = { normal: 0, atencion: 1, anomalo: 2 };
+
+  function parseFechaTs(f) {
+    // f = 'dd/mm/yyyy'
+    var p = f.split('/');
+    return new Date(+p[2], +p[1] - 1, +p[0]).getTime();
+  }
+
+  var CASOS = CASOS_REALES.map(function (c) {
+    var estado = nivelDeZ(c.z);
+    return {
+      id: '#' + c.id,
+      idNum: c.id,
+      empleado: c.empleado,
+      proceso: c.proceso,
+      empresa: c.empresa === null ? '—' : ('C-' + c.empresa),
+      empresaNum: c.empresa === null ? -1 : c.empresa,
+      fecha: c.fecha,
+      fechaTs: parseFechaTs(c.fecha),
+      predicho: c.predicho,
+      real: c.real,
+      diff: +(c.real - c.predicho).toFixed(1),
+      z: c.z,
+      rareza: Math.round(Math.abs(c.z) * 100),
+      estado: estado,
+      estadoRank: ESTADO_RANK[estado],
+    };
+  });
+
+  /* ---------- Ordenacion de la tabla (clic en el titulo de columna) ---------- */
+  var COLS = {
+    caso:      { label: 'Caso',      key: function (c) { return c.idNum; } },
+    empresa:   { label: 'Empresa (código)', key: function (c) { return c.empresaNum; } },
+    fecha:     { label: 'Fecha',     key: function (c) { return c.fechaTs; } },
+    grupo2:    { label: '',          key: function (c) { return viewState.groupBy === 'modelo' ? c.empleado : c.proceso; } },
+    predicho:  { label: 'Predicho',  key: function (c) { return c.predicho; } },
+    real:      { label: 'Real',      key: function (c) { return c.real; } },
+    diff:      { label: 'Diferencia', key: function (c) { return c.diff; } },
+    rareza:    { label: 'Rareza',    key: function (c) { return c.rareza; } },
+    estado:    { label: 'Estado',    key: function (c) { return c.estadoRank; } },
+  };
+  var sortState = { col: 'rareza', dir: 'desc' };
+
+  function sortRows(rows) {
+    var col = COLS[sortState.col];
+    if (!col) return rows;
+    var dir = sortState.dir === 'asc' ? 1 : -1;
+    return rows.slice().sort(function (a, b) {
+      var va = col.key(a), vb = col.key(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }
+
+  /* ---------- Grafico Predicho vs. real, en promedio (por modelo / responsable / cliente) ---------- */
+  // El umbral minimo evita que un caso suelto dispare la media por azar. El volumen por
+  // cliente es mucho menor que por modelo o responsable, asi que su umbral es mas bajo.
+  function agregarPorClave(keyFn, minimo, distinctFn) {
+    var acc = {};
+    CASOS.forEach(function (c) {
+      var k = keyFn(c);
+      if (k === null || k === undefined) return;
+      if (!acc[k]) acc[k] = { key: k, n: 0, sumPred: 0, sumReal: 0, distintos: {} };
+      acc[k].n++; acc[k].sumPred += c.predicho; acc[k].sumReal += c.real;
+      if (distinctFn) acc[k].distintos[distinctFn(c)] = true;
+    });
+    var filas = Object.keys(acc).map(function (k) {
+      var a = acc[k];
+      var pred = a.sumPred / a.n, real = a.sumReal / a.n;
+      return { key: a.key, n: a.n, pred: pred, real: real, diff: real - pred, nDistintos: Object.keys(a.distintos).length };
+    }).filter(function (f) { return f.n >= minimo; });
+    filas.sort(function (a, b) { return b.diff - a.diff; });
+    return filas;
+  }
+  var CHART_DATA = {
+    modelo: agregarPorClave(function (c) { return c.proceso; }, 10),
+    empleado: agregarPorClave(function (c) { return c.empleado; }, 10),
+    cliente: agregarPorClave(function (c) { return c.empresaNum === -1 ? null : c.empresaNum; }, 3, function (c) { return c.proceso; }),
+  };
+  var CHART_LABEL = { modelo: 'Modelo', empleado: 'Responsable', cliente: 'Cliente C-' };
+  var CHART_CLICKABLE = { modelo: true, empleado: true, cliente: false };
+  var chartType = 'modelo';
+
+  var CHART_SUB = {
+    modelo: 'De mayor a menor diferencia — pincha una fila para ir a sus casos',
+    empleado: 'De mayor a menor diferencia — pincha una fila para ir a sus casos',
+    cliente: 'De mayor a menor diferencia — solo clientes con 3 o más casos en test',
+  };
+
+  function renderChart() {
+    var filas = CHART_DATA[chartType];
+    var clickable = CHART_CLICKABLE[chartType];
+    document.getElementById('chartSub').textContent = CHART_SUB[chartType];
+    var maxVal = Math.max.apply(null, filas.map(function (f) { return Math.max(f.pred, f.real); }).concat([1]));
+    var body = document.getElementById('chartBody');
+    body.innerHTML = filas.map(function (f) {
+      var label = CHART_LABEL[chartType] + ' ' + f.key;
+      var sub = chartType === 'cliente' ? (f.n + ' casos · ' + f.nDistintos + ' modelo' + (f.nDistintos === 1 ? '' : 's') + ' distintos') : (f.n + ' casos');
+      var wPred = Math.max(2, Math.round(f.pred / maxVal * 100));
+      var wReal = Math.max(2, Math.round(f.real / maxVal * 100));
+      return '<div class="chart-row' + (clickable ? '' : ' not-clickable') + '" data-key="' + f.key + '" title="' + label + '">' +
+        '<div class="chart-row-label">' + label + '<span class="n">' + sub + '</span></div>' +
+        '<div class="chart-bars">' +
+          '<div class="chart-bar-track"><div class="chart-bar-fill calm" style="width:' + wPred + '%"></div></div>' +
+          '<div class="chart-bar-track"><div class="chart-bar-fill hot" style="width:' + wReal + '%"></div></div>' +
+        '</div>' +
+        '<div class="chart-row-diff" style="color:' + (f.diff >= 0 ? 'var(--rose)' : 'var(--green)') + '">' + (f.diff >= 0 ? '+' : '') + f.diff.toLocaleString('es-ES', {maximumFractionDigits:1}) + ' min</div>' +
+      '</div>';
+    }).join('');
+    if (clickable) {
+      body.querySelectorAll('.chart-row').forEach(function (row) {
+        row.addEventListener('click', function () { jumpToGroup(chartType, row.dataset.key); });
+      });
+    }
+  }
+
+  document.getElementById('chartSeg').querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('chartSeg').querySelectorAll('button').forEach(function (b) { b.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      chartType = btn.dataset.chart;
+      renderChart();
+    });
+  });
+
+  /* ---------- Estado de la vista de casos ---------- */
+  var viewState = { groupBy: 'empleado', status: 'todos', focusEmpleado: null };
+  var verdicts = {}; // id -> 'razonable' | 'anomalo' | 'no_se'
+  var openGroups = {}; // 'empleado-24' -> true, se conserva entre renders (p.ej. al ordenar)
+
+  function labelGroup(key, groupBy) {
+    return groupBy === 'empleado' ? ('Responsable ' + key) : ('Modelo ' + key);
+  }
+
+  function headerRow() {
+    var grupo2Label = viewState.groupBy === 'modelo' ? 'Responsable' : 'Modelo';
+    var order = ['caso', 'empresa', 'fecha', 'grupo2', 'predicho', 'real', 'diff', 'rareza', 'estado'];
+    var html = order.map(function (key) {
+      var label = key === 'grupo2' ? grupo2Label : COLS[key].label;
+      var active = sortState.col === key;
+      var arrow = active ? (sortState.dir === 'asc' ? '▲' : '▼') : '▲';
+      return '<th class="sortable' + (active ? ' sort-active' : '') + '" data-sort-key="' + key + '">' +
+        label + ' <span class="arrow">' + arrow + '</span></th>';
+    }).join('');
+    return html + '<th>Tu criterio</th>';
+  }
+
+  function renderCases() {
+    var list = document.getElementById('casesList');
+    list.innerHTML = '';
+
+    var filtered = CASOS.filter(function (c) {
+      return viewState.status === 'todos' || c.estado === viewState.status;
+    });
+
+    var keyFn = viewState.groupBy === 'empleado'
+      ? function (c) { return c.empleado; }
+      : function (c) { return c.proceso; };
+
+    var groups = {};
+    filtered.forEach(function (c) {
+      var k = keyFn(c);
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(c);
+    });
+
+    var keys = Object.keys(groups);
+    if (viewState.groupBy === 'empleado') keys.sort(function (a, b) { return EMP_IDS.indexOf(+a) - EMP_IDS.indexOf(+b); });
+    else keys.sort();
+
+    if (!keys.length) {
+      list.innerHTML = '<p class="note-scope">No hay casos que coincidan con este filtro.</p>';
+      return;
+    }
+
+    keys.forEach(function (k) {
+      var rows = groups[k];
+      var nAnom = rows.filter(function (r) { return r.estado === 'anomalo'; }).length;
+      var nAtencion = rows.filter(function (r) { return r.estado === 'atencion'; }).length;
+      var groupKey = viewState.groupBy + '-' + k;
+      if (viewState.groupBy === 'empleado' && String(viewState.focusEmpleado) === String(k)) openGroups[groupKey] = true;
+      var group = document.createElement('div');
+      group.className = 'group';
+      group.id = 'group-' + groupKey;
+      if (openGroups[groupKey]) group.classList.add('open');
+
+      var ST_CLASS = { anomalo: 'err', atencion: 'warn', normal: 'ok' };
+      var ST_LABEL = { anomalo: 'anómalo', atencion: 'atención', normal: 'normal' };
+      var DIFF_CLASS = { anomalo: 'n-off', atencion: 'n-warn', normal: '' };
+
+      var tableRows = sortRows(rows).map(function (c) {
+        var mult = (c.real / c.predicho).toFixed(1);
+        var v = verdicts[c.id];
+        var dClass = DIFF_CLASS[c.estado];
+        return '<tr>' +
+          '<td>' + c.id + '</td>' +
+          '<td class="num">' + c.empresa + '</td>' +
+          '<td class="num">' + c.fecha + '</td>' +
+          (viewState.groupBy === 'modelo' ? '<td>Responsable ' + c.empleado + '</td>' : '<td>Modelo ' + c.proceso + '</td>') +
+          '<td class="num">' + c.predicho.toLocaleString('es-ES', {minimumFractionDigits:1}) + ' min</td>' +
+          '<td class="num' + (dClass ? ' ' + dClass : '') + '">' + c.real.toLocaleString('es-ES', {minimumFractionDigits:1}) + ' min</td>' +
+          '<td class="num' + (dClass ? ' ' + dClass : '') + '">' + (c.diff >= 0 ? '+' : '') + c.diff.toLocaleString('es-ES', {minimumFractionDigits:1}) + ' min (' + mult + '×)</td>' +
+          '<td class="num' + (dClass ? ' ' + dClass : '') + '" title="z = ' + (c.z >= 0 ? '+' : '') + c.z.toLocaleString('es-ES', {minimumFractionDigits:2}) + ' desviaciones típicas">' + c.rareza + '&nbsp;%</td>' +
+          '<td><span class="st ' + ST_CLASS[c.estado] + '">' + ST_LABEL[c.estado] + '</span></td>' +
+          '<td><div class="verdict-group" data-id="' + c.id + '">' +
+            '<button type="button" class="sel-razonable' + (v === 'razonable' ? ' is-sel' : '') + '">razonable</button>' +
+            '<button type="button" class="sel-anomalo' + (v === 'anomalo' ? ' is-sel' : '') + '">anómalo</button>' +
+            '<button type="button" class="sel-no_se' + (v === 'no_se' ? ' is-sel' : '') + '">no sé</button>' +
+          '</div></td>' +
+        '</tr>';
+      }).join('');
+
+      group.innerHTML =
+        '<div class="group-head">' +
+          '<span class="group-chevron">▸</span>' +
+          '<span class="group-name">' + labelGroup(k, viewState.groupBy) + '</span>' +
+          '<span class="group-count' + (nAnom > 0 ? ' has-anom' : '') + '">' + rows.length + ' casos · ' + nAnom + ' anómalo' + (nAnom === 1 ? '' : 's') + ' · ' + nAtencion + ' en atención</span>' +
+        '</div>' +
+        '<div class="group-body">' +
+          '<table class="cases-table"><thead><tr>' + headerRow() +
+          '</tr></thead><tbody>' + tableRows + '</tbody></table>' +
+        '</div>';
+
+      group.querySelector('.group-head').addEventListener('click', function () {
+        group.classList.toggle('open');
+        openGroups[groupKey] = group.classList.contains('open');
+      });
+      group.querySelectorAll('th.sortable').forEach(function (th) {
+        th.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var key = th.dataset.sortKey;
+          if (sortState.col === key) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+          else { sortState.col = key; sortState.dir = 'asc'; }
+          renderCases();
+        });
+      });
+      group.querySelectorAll('.verdict-group').forEach(function (vg) {
+        var id = vg.dataset.id;
+        vg.querySelectorAll('button').forEach(function (btn, i) {
+          var kind = ['razonable', 'anomalo', 'no_se'][i];
+          btn.addEventListener('click', function () {
+            verdicts[id] = verdicts[id] === kind ? undefined : kind;
+            vg.querySelectorAll('button').forEach(function (b) { b.classList.remove('is-sel'); });
+            if (verdicts[id]) btn.classList.add('is-sel');
+          });
+        });
+      });
+
+      list.appendChild(group);
+    });
+  }
+
+  document.getElementById('groupSeg').querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('groupSeg').querySelectorAll('button').forEach(function (b) { b.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      viewState.groupBy = btn.dataset.group;
+      renderCases();
+    });
+  });
+  document.getElementById('statusSeg').querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('statusSeg').querySelectorAll('button').forEach(function (b) { b.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      viewState.status = btn.dataset.status;
+      renderCases();
+    });
+  });
+
+  // Compartida entre las tarjetas de responsable ("Ver casos") y el grafico
+  // (pinchar una fila): cambia de agrupacion si hace falta, abre ese grupo y
+  // hace scroll hasta el. groupBy: 'empleado' | 'modelo'.
+  function jumpToGroup(groupBy, key) {
+    document.getElementById('groupSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.group === groupBy); });
+    document.getElementById('statusSeg').querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.status === 'todos'); });
+    viewState.groupBy = groupBy;
+    viewState.status = 'todos';
+    viewState.focusEmpleado = groupBy === 'empleado' ? key : null;
+    openGroups[groupBy + '-' + key] = true;
+    renderCases();
+    document.querySelectorAll('.user-card').forEach(function (c) { c.classList.toggle('is-focused', c.id === 'card-emp-' + key); });
+    var target = document.getElementById('group-' + groupBy + '-' + key);
+    if (target) target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  document.querySelectorAll('.btn-ver-casos').forEach(function (btn) {
+    btn.addEventListener('click', function () { jumpToGroup('empleado', btn.dataset.emp); });
+  });
+
+  renderChart();
+  renderCases();
+})();
+</script>

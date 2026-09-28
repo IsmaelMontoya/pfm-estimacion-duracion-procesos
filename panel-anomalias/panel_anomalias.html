@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Panel de Anomalías</title>
 
 <style>
@@ -28,12 +29,12 @@
   }
   a { color: var(--blue); }
 
-  /* ── Cabecera (fiel a bcx-header) ─────────────────────────────── */
+  /* ── Cabecera ─────────────────────────────── */
   .bcx-header {
     background: var(--bg); border-bottom: 1px solid var(--line);
-    padding: 16px 30px 0; display: flex; flex-direction: column; gap: 16px;
+    padding: 16px 30px; display: flex; flex-direction: column; gap: 16px;
   }
-  .bcx-brand { display: flex; align-items: center; gap: .9rem; }
+  .bcx-brand { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
   .bcx-brand-icon {
     width: 38px; height: 38px; border-radius: 11px; background: #f1e7de;
     display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
@@ -42,23 +43,11 @@
   .bcx-brand-sub { font-size: .85rem; color: var(--muted); margin-top: -1px; }
   .bcx-brand-divider { width: 1px; height: 34px; background: var(--line); margin: 0 .5rem; }
 
-  .bcx-tabs { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .bcx-tab {
-    background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent;
-    padding: 8px 14px 12px; font-weight: 700; font-size: 1.05rem; cursor: pointer; border-radius: 9px 9px 0 0;
-  }
-  .bcx-tab:hover { color: var(--ink); }
-  .bcx-tab.is-active { color: var(--ink); background: var(--surface); box-shadow: 0 3px 10px rgba(27,36,48,.10); }
-  .bcx-tab[data-tab="demo"].is-active { border-bottom-color: var(--blue); }
-  .bcx-tab[data-tab="gerente"].is-active { border-bottom-color: var(--amber); }
-
   main { padding: 0; }
-  .bcx-panel { display: none; padding: 26px 30px 60px; max-width: 1180px; margin: 0 auto; }
-  .bcx-panel.is-active { display: block; }
+  .bcx-panel { padding: 26px 30px 60px; max-width: 1180px; margin: 0 auto; }
   h2 { font-size: 1.8rem; margin: 0 0 20px; padding-left: 12px; font-weight: 800; letter-spacing: -.01em; }
-  #tab-demo h2 { border-left: 4px solid var(--blue); }
   #tab-gerente h2 { border-left: 4px solid var(--amber); }
-  .panel-subtitle { color: var(--muted); font-size: 1rem; margin: -14px 0 22px 12px; max-width: 46rem; }
+  .panel-subtitle { color: var(--muted); font-size: 1.05rem; margin: -14px 0 22px 12px; max-width: 46rem; line-height: 1.5; }
   .panel-footnote { color: var(--muted); font-size: .74rem; margin-top: 36px; padding-top: 12px; border-top: 1px dashed var(--line); line-height: 1.6; }
 
   .note-scope {
@@ -70,75 +59,7 @@
   .note-scope.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
   .note-scope.ok { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
 
-  /* ══════════════════ TAB 1 — presentación de 3 minutos ══════════════════ */
-
-  .stage-frame {
-    position: relative;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-    box-shadow: var(--shadow); overflow: hidden;
-    height: 62vh; min-height: 460px;
-    display: flex; align-items: stretch;
-    cursor: pointer; user-select: none;
-  }
-  .scene {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 3rem 3rem; text-align: center; gap: 1.4rem;
-    opacity: 0; transform: translateX(2.4rem);
-    transition: opacity .5s ease, transform .5s ease;
-    pointer-events: none;
-  }
-  .scene.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
-  .scene.leaving-back { transform: translateX(-2.4rem); }
-  @media (prefers-reduced-motion: reduce) { .scene { transition: opacity .15s linear; transform: none !important; } }
-
-  .kicker { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  .kicker.is-alert { color: var(--rose); }
-  .scene-title { font-size: clamp(1.6rem, 3.4vw, 2.4rem); font-weight: 800; letter-spacing: -.01em; margin: 0; max-width: 34rem; }
-  .scene-title.is-alert { color: var(--rose); }
-  .lede { font-size: 1.05rem; line-height: 1.55; color: var(--muted); max-width: 34rem; margin: 0; }
-  .lede b { color: var(--ink); }
-
-  .big-readout { display: flex; align-items: baseline; gap: .7rem; }
-  .big-readout .value { font-size: clamp(3.2rem, 9vw, 5rem); font-weight: 800; letter-spacing: -.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
-  .big-readout .unit { font-size: 1rem; color: var(--muted); padding-bottom: .5rem; }
-
-  .stamps { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
-  .stamp { font-size: .8rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .2rem .7rem; font-weight: 600; }
-
-  .compare { display: flex; align-items: center; justify-content: center; gap: 1.8rem; }
-  .compare .fig { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
-  .compare .fig .tag { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
-  .compare .fig .n { font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800; font-variant-numeric: tabular-nums; }
-  .compare .fig.old .n { color: var(--muted); }
-  .compare .fig.new .n { color: var(--blue); }
-  .compare .arrow { font-size: 1.6rem; color: var(--muted); }
-  .delta-chip { font-weight: 700; color: var(--blue); background: #eef4ff; border: 1px solid #bfdbfe; border-radius: 999px; padding: .3rem 1rem; }
-
-  .gauge { width: min(560px, 84%); display: flex; flex-direction: column; gap: .9rem; }
-  .gauge-row { display: flex; align-items: center; gap: .8rem; }
-  .gauge-label { font-size: .82rem; color: var(--muted); width: 5.4rem; text-align: right; font-weight: 700; }
-  .gauge-track { position: relative; flex: 1; height: 1.4rem; background: #f1f5f9; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-  .gauge-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 3px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
-  .gauge-fill.calm { background: var(--blue); }
-  .gauge-fill.hot { background: repeating-linear-gradient(135deg, var(--rose) 0 12px, #b91c3f 12px 24px); }
-  .gauge-fill.overflow::after { content: '⟶ fuera de escala'; position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); font-size: .68rem; color: #fff; white-space: nowrap; }
-  .gauge-value { font-size: .85rem; width: 6.4rem; font-variant-numeric: tabular-nums; font-weight: 700; }
-  .gauge-row.hot .gauge-value { color: var(--rose); }
-
-  .rate-chip { display: inline-flex; align-items: baseline; gap: .5rem; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 999px; padding: .4rem 1.1rem; }
-  .rate-chip .n { font-size: 1.4rem; font-weight: 800; color: var(--rose); }
-  .rate-chip .t { font-size: .8rem; color: var(--muted); }
-
-  .stage-chrome { display: flex; justify-content: center; align-items: center; gap: .6rem; margin-top: 16px; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); border: 0; padding: 0; cursor: pointer; }
-  .dot.on { background: var(--blue); }
-  .dot.on.alert { background: var(--rose); }
-  .stage-counter { position: absolute; top: 16px; right: 20px; font-size: .78rem; color: var(--muted); font-weight: 700; }
-  .stage-hint { position: absolute; bottom: 18px; font-size: .78rem; color: var(--muted); left: 0; right: 0; text-align: center; }
-  .fin-restart { background: none; border: 0; color: var(--blue); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: .85rem; }
-
-  /* ══════════════════ TAB 2 — panel de gerente ══════════════════ */
+  /* ══════════════════ Panel de gerente ══════════════════ */
 
   .bcx-summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
   @media (max-width: 720px) { .bcx-summary-row { grid-template-columns: repeat(2, 1fr); } }
@@ -287,73 +208,13 @@
     <div class="bcx-brand-divider"></div>
     <div class="bcx-brand-sub">datos de test 2026 · pipeline Modelos de impuestos</div>
   </div>
-  <nav class="bcx-tabs">
-    <button class="bcx-tab is-active" data-tab="demo">Presentación</button>
-    <button class="bcx-tab" data-tab="gerente">Panel de gerente</button>
-  </nav>
 </header>
 
 <main>
 
-  <!-- ══════════ TAB 1 ══════════ -->
-  <section class="bcx-panel is-active" id="tab-demo">
-    <h2>Presentación (3 min)</h2>
-    <p class="note-scope">Pantalla pensada para proyectar en la defensa — clic, espacio o flechas para avanzar.</p>
-
-    <div class="stage-frame" id="stage">
-      <span class="stage-counter" id="counter">01 / 04</span>
-
-      <section class="scene active" id="s1">
-        <p class="kicker">antes de ejecutar el proceso</p>
-        <h1 class="scene-title">¿Cuánto debería tardar esto?</h1>
-        <p class="lede">Y, más importante todavía: <b>¿qué casos merecen que alguien los mire?</b></p>
-      </section>
-
-      <section class="scene" id="s2">
-        <p class="kicker">el punto de partida</p>
-        <div class="big-readout"><span class="value">16,4</span><span class="unit">min de error medio</span></div>
-        <p class="lede">Así de bien predice ya <b>una regla muy simple</b>: la mediana histórica de tiempo para este mismo tipo de modelo tributario.</p>
-        <div class="stamps"><span class="stamp">MOD. 303</span><span class="stamp">MOD. 111</span><span class="stamp">MOD. 200</span><span class="stamp">MOD. 347</span></div>
-      </section>
-
-      <section class="scene" id="s3">
-        <p class="kicker">el modelo, sin adornos</p>
-        <h2 class="scene-title" style="font-size:1.6rem">Se entrenó algo más complejo. Esto es lo que ganó.</h2>
-        <div class="compare">
-          <div class="fig old"><span class="tag">regla simple</span><span class="n">16,4</span></div>
-          <div class="arrow">→</div>
-          <div class="fig new"><span class="tag">modelo</span><span class="n">15,5</span></div>
-        </div>
-        <div class="delta-chip">−5,3 % de error, en minutos</div>
-        <p class="lede">Una mejora <b>real y consistente</b> — gana en las 4 pruebas internas — pero por debajo del 10&nbsp;% exigido antes de empezar. Aquí no está el valor.</p>
-      </section>
-
-      <section class="scene" id="s4">
-        <p class="kicker is-alert">al cerrar la campaña</p>
-        <h2 class="scene-title is-alert">Aquí está el valor.</h2>
-        <div class="gauge" id="gauge">
-          <div class="gauge-row"><span class="gauge-label">Predicho</span><div class="gauge-track"><div class="gauge-fill calm" id="fill-pred"></div></div><span class="gauge-value">23,8 min</span></div>
-          <div class="gauge-row hot"><span class="gauge-label">Real</span><div class="gauge-track"><div class="gauge-fill hot overflow" id="fill-real"></div></div><span class="gauge-value">1.003,7 min</span></div>
-        </div>
-        <p class="lede">El mismo modelo, mirado al revés, señala esto como <b>anómalo</b> — 42 veces más de lo esperado. En todo el test marca el 3,9&nbsp;% de los casos.</p>
-        <div class="rate-chip"><span class="n">3,9&nbsp;%</span><span class="t">de las negociaciones de prueba, señaladas</span></div>
-        <p><button class="fin-restart" id="restart" type="button">↺ volver a empezar</button></p>
-      </section>
-
-      <div class="stage-hint" id="hint">clic, espacio o → para continuar</div>
-    </div>
-    <div class="stage-chrome">
-      <button class="dot" data-i="0" aria-label="Escena 1"></button>
-      <button class="dot" data-i="1" aria-label="Escena 2"></button>
-      <button class="dot" data-i="2" aria-label="Escena 3"></button>
-      <button class="dot" data-i="3" aria-label="Escena 4"></button>
-    </div>
-  </section>
-
-  <!-- ══════════ TAB 2 ══════════ -->
   <section class="bcx-panel" id="tab-gerente">
     <h2>Panel de gerente</h2>
-    <p class="panel-subtitle">Revisión de procesos con sobrecoste de tiempo, por tipo de modelo tributario — para decidir qué merece la pena mirar antes de cerrar la campaña.</p>
+    <p class="panel-subtitle">Antes de fijar o revisar la cuota de un cliente conviene saber si el tiempo que le imputamos refleja el trabajo real. Este panel prioriza qué negociaciones merece la pena revisar antes de tomar esa decisión — no sustituye ese criterio, lo ordena.</p>
 
     <div class="bcx-summary-row">
       <div class="bcx-summary rose"><span class="bcx-big">239</span><span class="bcx-lbl">casos señalados (test 2026, real)</span></div>
@@ -384,7 +245,7 @@
     <div id="usersGrid"></div>
 
     <div class="real-callout">
-      <div class="rc-tag">Casos reales destacados (Fase 6)</div>
+      <div class="rc-tag">Casos reales destacados</div>
       <table>
         <thead><tr><th>Negociación</th><th>Modelo</th><th>Predicho</th><th>Real</th><th>Veces lo esperado</th></tr></thead>
         <tbody>
@@ -403,7 +264,7 @@
       </div>
       <div class="seg status" id="statusSeg">
         <button data-status="todos" class="is-on">Todos</button>
-        <button data-status="anomalo" class="st-anomalo">Anómalos (&gt;300%)</button>
+        <button data-status="anomalo" class="st-anomalo">Señalados (&gt;300%)</button>
         <button data-status="atencion" class="st-atencion">Atención (100–300%)</button>
         <button data-status="normal" class="st-normal">Normales (≤100%)</button>
       </div>
@@ -411,7 +272,7 @@
 
     <div id="casesList"></div>
 
-    <p class="panel-footnote">Datos reales del test 2026 (6.192 negociaciones), exportados de <code>predicciones_planificacion.parquet</code> y <code>deals.csv</code>, con el mismo cálculo de anomalía de la Fase 6 (sigma por proceso, |z|&nbsp;&gt;&nbsp;3). Instantánea estática de esa exportación: no se conecta en vivo a Bitrix. Su finalidad es detectar anomalías de proceso, no evaluar el desempeño de las personas — limitación 6 de la memoria del PFM.</p>
+    <p class="panel-footnote">Datos reales del test 2026 (6.192 negociaciones), exportados de <code>predicciones_planificacion.parquet</code> y <code>deals.csv</code>, con el mismo cálculo de la Fase 6 para priorizar casos (sigma por proceso, |z|&nbsp;&gt;&nbsp;3). Instantánea estática de esa exportación: no se conecta en vivo a Bitrix. Su finalidad es priorizar procesos para revisión, no evaluar el desempeño de las personas ni confirmar incidencias por sí solo: la validación ciega con revisión experta dio un 52,6&nbsp;% de acuerdo — limitación 6 de la memoria del PFM.</p>
   </section>
 
 </main>
@@ -420,65 +281,13 @@
 <script src="empleados_reales.js"></script>
 <script>
 (function () {
-  /* ---------- Tab switching ---------- */
-  var tabs = document.querySelectorAll('.bcx-tab');
-  var panels = { demo: document.getElementById('tab-demo'), gerente: document.getElementById('tab-gerente') };
-  tabs.forEach(function (t) {
-    t.addEventListener('click', function () {
-      tabs.forEach(function (x) { x.classList.remove('is-active'); });
-      Object.values(panels).forEach(function (p) { p.classList.remove('is-active'); });
-      t.classList.add('is-active');
-      panels[t.dataset.tab].classList.add('is-active');
-    });
-  });
-
-  /* ---------- Escenas de la presentación ---------- */
-  var scenes = ['s1', 's2', 's3', 's4'];
-  var current = 0;
-  var dots = document.querySelectorAll('.dot');
-  var counter = document.getElementById('counter');
-  var hint = document.getElementById('hint');
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function renderScene(prevIndex) {
-    scenes.forEach(function (id, i) {
-      var el = document.getElementById(id);
-      el.classList.remove('active', 'leaving-back');
-      if (i === current) { el.classList.add('active'); if (prevIndex !== undefined && prevIndex > current) el.classList.add('leaving-back'); }
-    });
-    dots.forEach(function (d, i) { d.classList.toggle('on', i === current); d.classList.toggle('alert', i === 3 && i === current); });
-    counter.textContent = String(current + 1).padStart(2, '0') + ' / 04';
-    hint.style.display = current === 0 ? 'block' : 'none';
-    if (current === 3) triggerGauge();
-  }
-  function triggerGauge() {
-    var pred = document.getElementById('fill-pred'), real = document.getElementById('fill-real');
-    pred.style.width = '0%'; real.style.width = '0%';
-    setTimeout(function () { pred.style.width = '18%'; real.style.width = '100%'; }, reduced ? 0 : 120);
-  }
-  function goScene(i) { var prev = current; current = Math.max(0, Math.min(scenes.length - 1, i)); renderScene(prev); }
-  function nextScene() { if (current < scenes.length - 1) goScene(current + 1); }
-  function prevScene() { if (current > 0) goScene(current - 1); }
-
-  document.getElementById('stage').addEventListener('click', function (e) {
-    if (e.target.closest('.dot') || e.target.closest('#restart')) return;
-    nextScene();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (!document.getElementById('tab-demo').classList.contains('is-active')) return;
-    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextScene(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevScene(); }
-    else if (e.key === 'Home') { e.preventDefault(); goScene(0); }
-  });
-  dots.forEach(function (d) { d.addEventListener('click', function (e) { e.stopPropagation(); goScene(parseInt(d.dataset.i, 10)); }); });
-  document.getElementById('restart').addEventListener('click', function (e) { e.stopPropagation(); goScene(0); });
-  renderScene();
-
   /* ---------- Panel de gerente: datos reales ---------- */
   // CASOS_REALES / EMPLEADOS_REALES vienen de casos_reales.js / empleados_reales.js,
   // exportados de output/predicciones_planificacion.parquet + output/deals.csv,
   // con el mismo calculo de anomalia de la Fase 6 (sigma por proceso, |z| > 3).
   // Verificado: 239 marcados de 6.192 (3,86 %), identico al informe oficial.
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var TOP_EMPLEADOS = EMPLEADOS_REALES.slice(0, 8);
   var EMP_IDS = EMPLEADOS_REALES.map(function (e) { return e.id; });
@@ -509,7 +318,7 @@
   // Adapta el formato real {id, proceso, empresa, empleado, fecha, predicho, real, z, anom}
   // al que consume el resto del panel.
   // Nivel de atencion visual, en 3 tramos sobre el mismo z ya calculado en la Fase 6.
-  // El umbral oficial de "anomalo" (|z| > 3, 239 casos) no cambia: esto solo anade un
+  // El umbral oficial de "senalado" (|z| > 3, 239 casos) no cambia: esto solo anade un
   // aviso intermedio para que un caso con diferencia grande pero z moderado no parezca
   // identico a uno realmente normal. "Rareza" es el mismo z expresado como % (z=1 -> 100%),
   // para no tener que explicar que es una desviacion tipica.
@@ -707,7 +516,7 @@
       if (openGroups[groupKey]) group.classList.add('open');
 
       var ST_CLASS = { anomalo: 'err', atencion: 'warn', normal: 'ok' };
-      var ST_LABEL = { anomalo: 'anómalo', atencion: 'atención', normal: 'normal' };
+      var ST_LABEL = { anomalo: 'señalado', atencion: 'atención', normal: 'normal' };
       var DIFF_CLASS = { anomalo: 'n-off', atencion: 'n-warn', normal: '' };
 
       var tableRows = sortRows(rows).map(function (c) {
@@ -726,7 +535,7 @@
           '<td><span class="st ' + ST_CLASS[c.estado] + '">' + ST_LABEL[c.estado] + '</span></td>' +
           '<td><div class="verdict-group" data-id="' + c.id + '">' +
             '<button type="button" class="sel-razonable' + (v === 'razonable' ? ' is-sel' : '') + '">razonable</button>' +
-            '<button type="button" class="sel-anomalo' + (v === 'anomalo' ? ' is-sel' : '') + '">anómalo</button>' +
+            '<button type="button" class="sel-anomalo' + (v === 'anomalo' ? ' is-sel' : '') + '">a revisar</button>' +
             '<button type="button" class="sel-no_se' + (v === 'no_se' ? ' is-sel' : '') + '">no sé</button>' +
           '</div></td>' +
         '</tr>';
@@ -736,7 +545,7 @@
         '<div class="group-head">' +
           '<span class="group-chevron">▸</span>' +
           '<span class="group-name">' + labelGroup(k, viewState.groupBy) + '</span>' +
-          '<span class="group-count' + (nAnom > 0 ? ' has-anom' : '') + '">' + rows.length + ' casos · ' + nAnom + ' anómalo' + (nAnom === 1 ? '' : 's') + ' · ' + nAtencion + ' en atención</span>' +
+          '<span class="group-count' + (nAnom > 0 ? ' has-anom' : '') + '">' + rows.length + ' casos · ' + nAnom + ' señalado' + (nAnom === 1 ? '' : 's') + ' · ' + nAtencion + ' en atención</span>' +
         '</div>' +
         '<div class="group-body">' +
           '<table class="cases-table"><thead><tr>' + headerRow() +

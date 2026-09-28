@@ -182,12 +182,16 @@ de revisión (ver Entrega 5).
 
 **Cómo lo usa el gestor:** antes de ejecutar, `prediccion_min` (y el intervalo de M3) para
 dimensionar la carga de la campaña; al cerrarla, la lista de negociaciones con
-`tipo_anomalia = exceso` para decidir cuáles revisar, con el residuo y los factores
-(sección 7 de la memoria de resultados) como contexto para juzgar cada caso.
+`tipo_anomalia = exceso` para priorizar cuáles revisar, con el residuo y el contexto
+descriptivo del caso (sección 7 de la memoria de resultados) como apoyo para juzgarlo.
 
 **Qué explicación se muestra:** el multiplicador "veces lo esperado" (más legible que el
-z-score en bruto), la mediana histórica del proceso como referencia, y los factores con
-mayor peso en la predicción de ese caso — nunca la predicción sola, sin contexto.
+z-score en bruto), la mediana histórica del proceso y del cliente como referencia, y el
+valor de las variables de ese caso concreto — nunca la predicción sola, sin contexto. No
+se muestran "los factores que explican ese caso": la importancia por permutación usada en
+el proyecto (sección 6 de la memoria de resultados) es global, calculada sobre todo el
+test, y no permite atribuir causas a una negociación individual sin una técnica de
+explicación local que este proyecto no implementa.
 
 ---
 
@@ -311,10 +315,15 @@ recalibrarlos por campaña.
 intento fuera de lo planeado, ni se tocó el test: se documentó la mejora real (5,31 %)
 como resultado por debajo del umbral, con las tres causas medidas que lo explican (cola
 larga, deriva temporal, censura del target — detalle en la Entrega de resultados). El
-modelo se mantiene en producción para la tarea de planificación, con esa mejora modesta
-declarada, y su residuo se reutiliza íntegramente para la detección de anomalías, que es
-donde aporta el valor más claro (3,86 % de tasa de marcado, dentro del límite de
-manejabilidad del 5 %).
+modelo queda como **prototipo**: aporta una mejora real pero modesta, todavía insuficiente
+para justificar que sustituya a la mediana histórica en producción. Se conserva porque su
+residuo es la base de la detección de anomalías, donde el proyecto reporta el valor más
+claro (3,86 % de tasa de marcado, dentro del límite de manejabilidad del 5 %) — con la
+misma cautela: el contraste ciego con un experto dio un 52,6 % de acuerdo
+(`output/06_anomalias.md`, § 5.1), un resultado modesto que tampoco basta todavía para
+tomar decisiones operativas sin revisión humana. El siguiente paso no es otro algoritmo,
+sino incorporar variables que expliquen la complejidad real de cada caso y volver a
+validar.
 
 ---
 
@@ -350,6 +359,7 @@ manejabilidad del 5 %).
 
 | Línea | Qué falta para abordarla |
 |---|---|
+| Mejorar la detección de anomalías | No es otro algoritmo: incorporar variables que capturen la complejidad real del caso (ajustes, amortizaciones, deducciones, volumen intracomunitario — grupo 1 de la validación experta, `output/06_anomalias.md` § 5.1) y repetir la validación ciega con experto |
 | Extensión a contabilidad | Ejecutar los mismos scripts cambiando `PIPELINE_OBJETIVO`. Volumen disponible: 10.347,6 h entre Contabilidad Interna, Contabilidad Externa y Cierres. No requiere código nuevo |
 | Extensión a rentas | Requiere una tercera campaña. Con dos (2025 y 2026) la validación temporal se reduce a un único corte |
 | Recalibrar los intervalos de M3 | Estimar los cuantiles por campaña en lugar de sobre train completo, y medir de nuevo la cobertura frente al 80 % nominal |
